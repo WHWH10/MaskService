@@ -1,29 +1,34 @@
 package com.ejcho.maskservice
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.pm.PackageManager
 import android.util.Log
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ejcho.maskservice.model.Store
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
+import javax.inject.Inject
 
-class MainViewModel : ViewModel() {
+@HiltViewModel
+class MainViewModel @Inject constructor(
+    private val maskService: MaskService,
+    private val fusedLocationClient: FusedLocationProviderClient
+) : ViewModel() {
     val itemLiveData = MutableLiveData<List<Store>>()
     val loadingLiveData = MutableLiveData<Boolean>()
 
-    private val maskService: MaskService
 
     init {
-        val retrofit = Retrofit.Builder()
-            .baseUrl(MaskService.BASE_URL)
-            .addConverterFactory(MoshiConverterFactory.create())
-            .build()
-
-        maskService = retrofit.create(MaskService::class.java)
-
         fetchStoreInfo()
+//        fetchLocationInfo()
     }
 
     private fun fetchStoreInfo() {
@@ -45,5 +50,15 @@ class MainViewModel : ViewModel() {
             loadingLiveData.value = false
         }
 
+    }
+
+//    @SuppressLint("MissingPermission")
+    fun fetchLocationInfo() {
+    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            Log.d("MainLocation_lat", "${location.latitude}")
+            Log.d("MainLocation_lng", "${location.longitude}")
+        }.addOnFailureListener { exception ->
+            Log.d("MainLocation_Fail", "$exception")
+        }
     }
 }
